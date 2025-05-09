@@ -27,3 +27,7 @@ services:
     environment:
       - KAFKA_CLUSTERS_0_BOOTSTRAP_SERVERS=127.0.0.1:9092
       - KAFKA_CLUSTERS_0_NAME=kraft
+
+  redis:
+    network_mode: host
+    image: redis:8

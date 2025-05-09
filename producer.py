@@ -1,7 +1,6 @@
 import asyncio
 import logging
 import sys
-from os import getenv
 from typing import Any, Callable, Dict
 
 from aiogram import BaseMiddleware, Bot, Dispatcher
@@ -12,12 +11,11 @@ from confluent_kafka import Producer
 from confluent_kafka.admin import AdminClient, NewTopic
 
 from logger import logger
+from models.config import GlobalSettings
 
-# Bot token can be obtained via https://t.me/BotFather
-TOKEN = getenv("TOKEN")
+cfg = GlobalSettings()
 
-
-KAFKA_CONF = {"bootstrap.servers": "127.0.0.1:9092"}
+KAFKA_CONF = {"bootstrap.servers": cfg.kafka_conf_bootstrap_server}
 
 producer = Producer(KAFKA_CONF)
 
@@ -44,7 +42,7 @@ class KafkaMiddleware(BaseMiddleware):
 
 
 async def main() -> None:
-    bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+    bot = Bot(token=cfg.telegram_bot_token.get_secret_value(), default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     dp.update.outer_middleware(KafkaMiddleware())
     await dp.start_polling(bot)
 

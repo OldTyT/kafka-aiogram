@@ -42,8 +42,11 @@ python3 consumer.py
 
 Create env variables:
 
-|Variable|	Description|	Default|
+|Variable | Description | Default |
 |-|-|-|
-|TELEGRAM_BOT_TOKEN	|From [BotFather](https://t.me/BotFather)|	Required|
-|LOG_JSON|	JSON-formatted logs (true/false)|	false|
-|LOG_LEVEL	|Log verbosity (`debug	info	warning	error`)	|info|
+| TELEGRAM_BOT_TOKEN | From [BotFather](https://t.me/BotFather) |	Required |
+| LOG_JSON | JSON-formatted logs (true/false)| `false` |
+| LOG_LEVEL	| Log verbosity (`debug, info, warning, error`)	| `info` |
+| REDIS_URL | Redis URL | `redis://127.0.0.1:6379/0` |
+| KAFKA_CONF_BOOTSTRAP_SERVER | Kafka bootstrap server | `127.0.0.1:9092` |
+| KAFKA_CONF_AUTO_OFFSET_RESET | Kafka auto offset reset | `earliest` |

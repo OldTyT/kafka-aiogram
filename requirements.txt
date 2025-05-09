@@ -1,3 +1,4 @@
 aiogram==3.15.0
 confluent-kafka==2.10.0
 loguru==0.7.2
+redis==5.0.2

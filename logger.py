@@ -1,10 +1,13 @@
 """Logging."""
 
 import logging
-import os
 import sys
 
 from loguru import logger  # noqa: F811
+
+from models.config import GlobalSettings
+
+cfg = GlobalSettings()
 
 
 class InterceptHandler(logging.Handler):
@@ -46,26 +49,14 @@ class CustomizeLogger:
     @classmethod
     def customize_logging(cls):
         logger.remove()
-        log_is_json = os.getenv("LOG_JSON", "")
-        log_is_json = log_is_json.lower() in [
-            "true",
-            "1",
-            "t",
-            "y",
-            "yes",
-            "yeah",
-            "yup",
-            "certainly",
-            "uh-huh",
-        ]
         logger.add(
             sys.stderr,
             enqueue=True,
             backtrace=True,
             colorize=True,
-            level=os.getenv("LOG_LEVEL", "INFO").upper(),
+            level=cfg.log_level.upper(),
             format=formatter,
-            serialize=log_is_json,
+            serialize=cfg.log_json,
         )
         logging.basicConfig(handlers=[InterceptHandler()], level=0)
         # logging.basicConfig(handlers=[InterceptHandler()])

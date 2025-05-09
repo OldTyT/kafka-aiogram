@@ -1,22 +1,28 @@
 import asyncio
+import signal
 import json
-from os import getenv
+import sys
 
 from aiogram import Bot, Dispatcher
 from aiogram.types import Message, Update
+from aiogram.fsm.storage.redis import RedisStorage
 from confluent_kafka import Consumer
 
 from logger import logger
+from models.config import GlobalSettings
 
+cfg = GlobalSettings()
+
+PROGRAM_RUNNING = True
 KAFKA_CONF = {
-    "bootstrap.servers": "127.0.0.1:9092",
+    "bootstrap.servers": cfg.kafka_conf_bootstrap_server,
     "group.id": "bot_reader",
-    "auto.offset.reset": "earliest",
+    "auto.offset.reset": cfg.kafka_conf_auto_offset_reset,
 }
-# Bot token can be obtained via https://t.me/BotFather
-TOKEN = getenv("TOKEN")
-bot = Bot(token=TOKEN)
-dp = Dispatcher()
+
+bot = Bot(token=cfg.telegram_bot_token.get_secret_value())
+storage = RedisStorage.from_url(cfg.redis_url.get_secret_value())
+dp = Dispatcher(storage=storage)
 
 
 @dp.message()
@@ -27,12 +33,20 @@ async def echo_handler(message: Message) -> None:
         await message.answer("Nice try!")
 
 
+def signal_handler(signal_num, current_stack_frame):
+    global PROGRAM_RUNNING
+    PROGRAM_RUNNING = False
+
+
 async def kafka_consumer():
+    global PROGRAM_RUNNING
     logger.info("Starting consumer.")
     consumer = Consumer(KAFKA_CONF)
     consumer.subscribe(["telegram_update"])
     try:
         while True:
+            if not PROGRAM_RUNNING:
+                break
             msg = consumer.poll(0.2)
             if msg is None:
                 continue
@@ -42,6 +56,7 @@ async def kafka_consumer():
             try:
                 json_msg = json.loads(msg.value().decode("utf-8"))
                 update = Update(**json_msg)
+                logger.debug(update)
                 await dp.feed_update(bot, update)
             except Exception as e:
                 logger.error(f"Error msg processing: {e}")
@@ -55,4 +70,7 @@ async def main():
 
 
 if __name__ == "__main__":
+    signal.signal(signal.SIGTERM, signal_handler)
+    signal.signal(signal.SIGINT, signal_handler)
     asyncio.run(main())
+    logger.warning("Remaining processes finished!, shutting down now.")
